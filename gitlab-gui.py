@@ -13,7 +13,7 @@ logging.info("Program gitlab-gui Start")
 from sys import argv
 from PyQt4 import QtCore, QtGui
 import mainwindow
-#import gittle
+import gitlab
 import ConfigParser
 from os import getenv
 import requests
@@ -31,12 +31,13 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
         self.label_4.hide()
         self.label_5.hide()
         self.actionExit.triggered.connect(self.close)
-        self.user = getenv("LOGNAME")  # get the logged username so we can configure git
-        self.label_login.setText("Logged as " + self.user)
+        #self.user = getenv("LOGNAME")  # get the logged username so we can configure git
+
         self.connect(self.label_login, QtCore.SIGNAL("clicked()"),
                      self.clickled_on_login)  # have to do this because we are clicking on a label
         self.token = ""
         self.host = ""
+        self.user = ""
         self.model = QtGui.QStandardItemModel(self.listView)
         config = ConfigParser.ConfigParser()
         config.read("config.ini")
@@ -55,17 +56,20 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
         try:
             self.host = config.get("gitlab", "url")
         except ConfigParser.NoOptionError:
-            while self.host == "":
+            while self.host == "" and self.user == "":
                 self.host, ok = QtGui.QInputDialog().getText(self, "Gitlab",
                                                              "Enter the gitlab full URL (http://xxx.xxxx.xxx)")
+                self.user, ok = QtGui.QInputDialog().getText(self, "Gitlab",
+                                             "Enter the gitlab user")
             config.set("gitlab", "url", self.host)
+            config.set("gitlab", "user", self.user)
             with open("config.ini", "wb") as f:
                 config.write(f)
-
-        project_url = self.host + "/api/v3/projects?private_token=" + self.token
-        r = requests.get(project_url)
-        self.repos = []
-        for repo in json.loads(r.content):
+        self.label_login.setText("Logged as " + self.user)
+        git = gitlab.Gitlab(host=self.host, user=self.user, token=self.token)
+        print git.getprojects()
+        for repo in git.getprojects():
+            print repo
             self.repos.append([repo['name'], repo['last_activity_at'], repo["web_url"]])
             item = QtGui.QStandardItem()
             item.setText(repo['name'])
