@@ -65,12 +65,10 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
             config.set("gitlab", "user", self.user)
             with open("config.ini", "wb") as f:
                 config.write(f)
-        self.label_login.setText("Logged as " + self.user)
+        self.label_login.setText("Logged as " + config.get("gitlab","user"))
         git = gitlab.Gitlab(host=self.host, user=self.user, token=self.token)
         print git.getprojects()
         for repo in git.getprojects():
-            print repo
-            self.repos.append([repo['name'], repo['last_activity_at'], repo["web_url"]])
             item = QtGui.QStandardItem()
             item.setText(repo['name'])
             self.model.appendRow(item)

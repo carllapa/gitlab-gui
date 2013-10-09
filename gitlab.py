@@ -296,9 +296,9 @@ class Gitlab(object):
         :return: list with the repo name, description, last activity,
          web url, ssh url, owner and if its public
         """
-        if sudo == "":
-            sudo = self.user
-        params = {'page': page, 'per_page': per_page, 'sudo': sudo}
+        params = {'page': page, 'per_page': per_page}
+        if sudo != "":
+            params['sudo'] = sudo
         request = requests.get(self.projects_url, params=params,
                                headers=self.headers)
         if request.status_code == 200:
