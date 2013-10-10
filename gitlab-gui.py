@@ -29,7 +29,6 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
         self.label_4.hide()
         self.label_5.hide()
         self.actionExit.triggered.connect(self.close)
-        #self.user = getenv("LOGNAME")  # get the logged username so we can configure git
 
         self.connect(self.label_login, QtCore.SIGNAL("clicked()"),
                      self.clickled_on_login)  # have to do this because we are clicking on a label
@@ -63,7 +62,8 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
             config.set("gitlab", "user", self.user)
             with open("config.ini", "wb") as f:
                 config.write(f)
-        self.label_login.setText("Logged as " + config.get("gitlab","user"))
+        # setup a window that says connecting and catch the error if can't connect
+        self.label_login.setText("Logged as " + config.get("gitlab", "user"))
         git = gitlab.Gitlab(host=self.host, user=self.user, token=self.token)
         self.repos = git.getprojects()
         for repo in self.repos:
