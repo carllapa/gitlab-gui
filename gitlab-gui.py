@@ -15,9 +15,7 @@ from PyQt4 import QtCore, QtGui
 import mainwindow
 import gitlab
 import ConfigParser
-from os import getenv
 import requests
-import json
 import markdown
 
 
@@ -67,29 +65,24 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
                 config.write(f)
         self.label_login.setText("Logged as " + config.get("gitlab","user"))
         git = gitlab.Gitlab(host=self.host, user=self.user, token=self.token)
-        print git.getprojects()
-        for repo in git.getprojects():
+        self.repos = git.getprojects()
+        for repo in self.repos:
+            print repo
             item = QtGui.QStandardItem()
             item.setText(repo['name'])
             self.model.appendRow(item)
         self.listView.setModel(self.model)
         self.listView.clicked.connect(self.on_item_changed)
 
-        # future use
-        #user_url = "http://localhost/api/v3/user?private_token=" + self.token
-        #r = requests.get(user_url)
-        #print json.loads(r.content)
-        #new_ssh_key_url = "http://localhost/api/v3/user/keys?private_token=" + self.token + "&title=" +
-        #  ssh_title + "&key=" + ssh_key
-
     def on_item_changed(self, item):
-        r = requests.get(self.repos[item.row()][2] + "/raw/master/README?private_token=" + self.token)
+        print self.repos[item.row()]['web_url']+ "/raw/master/README?private_token=" + self.token
+        r = requests.get(self.repos[item.row()]['web_url'] + "/raw/master/README?private_token=" + self.token)
         if "<!DOCTYPE html>" in r.content:  # the 404 is html while the raw is plain text
             text = "<p>There isn't a README for this repository</p>"
             pass
         else:
             text = markdown.markdown(r.content)
-        self.label_info.setText("Last modified at: " + self.repos[item.row()][1] + "<br><br>" + text)
+        self.label_info.setText("Last modified at: " + self.repos[item.row()]['last_activity_at'] + "<br><br>" + text)
 
     def clickled_on_login(self):
         # Here we should put some popup to remove the token and logout
