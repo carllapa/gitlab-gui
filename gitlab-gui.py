@@ -13,57 +13,38 @@ logging.info("Program gitlab-gui Start")
 from sys import argv
 from PyQt4 import QtCore, QtGui
 import mainwindow
+import preferences
 import gitlab
 import ConfigParser
 import requests
 import markdown
+import os
 
 
-class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
+class MainWindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
     def __init__(self, parent=None):
-        super(mainwindow, self).__init__(parent)
+        super(MainWindow, self).__init__(parent)
         self.setupUi(self)
         self.label.hide()
         self.label_2.hide()
         self.label_3.hide()
         self.label_4.hide()
         self.label_5.hide()
+        self.menuMenu.show()
+        self.user = ""
+        self.host = ""
+        self.token = ""
+        self.actionPreferences.triggered.connect(self.preferences)
         self.actionExit.triggered.connect(self.close)
-
         self.connect(self.label_login, QtCore.SIGNAL("clicked()"),
                      self.clickled_on_login)  # have to do this because we are clicking on a label
-        self.token = ""
-        self.host = ""
-        self.user = ""
         self.model = QtGui.QStandardItemModel(self.listView)
-        config = ConfigParser.ConfigParser()
-        config.read("config.ini")
-        try:
-            self.token = config.get("gitlab", "token")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            QtGui.QMessageBox.information(self.parent(), "Authentication",
-                                          "We need to use your token in order to login to your gitlab instance\n"
-                                          "Please find it in your Gitlab profile", QtGui.QMessageBox.Ok)
-            while self.token == "":
-                self.token, ok = QtGui.QInputDialog().getText(self, "Token", "Enter your token:")
-            config.add_section("gitlab")
-            config.set("gitlab", "token", self.token)
-            with open("config.ini", "wb") as f:
-                config.write(f)
-        try:
-            self.host = config.get("gitlab", "url")
-        except ConfigParser.NoOptionError:
-            while self.host == "" and self.user == "":
-                self.host, ok = QtGui.QInputDialog().getText(self, "Gitlab",
-                                                             "Enter the gitlab full URL (http://xxx.xxxx.xxx)")
-                self.user, ok = QtGui.QInputDialog().getText(self, "Gitlab",
-                                             "Enter the gitlab user")
-            config.set("gitlab", "url", self.host)
-            config.set("gitlab", "user", self.user)
-            with open("config.ini", "wb") as f:
-                config.write(f)
+
+
+        self.configuration()
+
         # setup a window that says connecting and catch the error if can't connect
-        self.label_login.setText("Logged as " + config.get("gitlab", "user"))
+        self.label_login.setText("Logged as " + self.user)
         git = gitlab.Gitlab(host=self.host, user=self.user, token=self.token)
         self.repos = git.getprojects()
         for repo in self.repos:
@@ -74,12 +55,44 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
         self.listView.setModel(self.model)
         self.listView.clicked.connect(self.on_item_changed)
 
+    def configuration(self):
+        if os.path.isfile("config.ini"):
+            logging.info("Config exists")
+            config = ConfigParser.ConfigParser()
+            config.read("config.ini")
+            self.token = config.get("gitlab", "token")
+            self.host = config.get("gitlab", "host")
+            self.user = config.get("gitlab", "user")
+        else:
+            while self.token == "" or self.user == "" or self.host == "":
+                self.user, ok = QtGui.QInputDialog().getText(self, "User", "Enter your Gitlab user:")
+                self.host, ok = QtGui.QInputDialog().getText(self, "Host", "Enter your Gitlab host:")
+                self.token, ok = QtGui.QInputDialog().getText(self, "Token", "Enter your user token:")
+            # clean up the host name
+            if str(self.host).startswith("http://"):
+                pass
+            else:
+                self.host = "http://" + self.host
+
+
+            with open("config.ini", "wb") as config_file:
+                config = ConfigParser.ConfigParser()
+                config.add_section("gitlab")
+                config.set("gitlab","user", self.user)
+                config.set("gitlab","token", self.token)
+                config.set("gitlab","host", self.host)
+                config.write(config_file)
+
     def on_item_changed(self, item):
         print self.repos[item.row()]['web_url']+ "/raw/master/README?private_token=" + self.token
         r = requests.get(self.repos[item.row()]['web_url'] + "/raw/master/README?private_token=" + self.token)
         if "<!DOCTYPE html>" in r.content:  # the 404 is html while the raw is plain text
-            text = "<p>There isn't a README for this repository</p>"
-            pass
+            r = requests.get(self.repos[item.row()]['web_url'] + "/raw/master/README.md?private_token=" + self.token)
+            if "<!DOCTYPE html>" in r.content:
+                text = "<p>There isn't a README for this repository</p>"
+                pass
+            else:
+                text = markdown.markdown(r.content)
         else:
             text = markdown.markdown(r.content)
         self.label_info.setText("Last modified at: " + self.repos[item.row()]['last_activity_at'] + "<br><br>" + text)
@@ -87,9 +100,18 @@ class mainwindow(QtGui.QMainWindow, mainwindow.Ui_MainWindow):
     def clickled_on_login(self):
         # Here we should put some popup to remove the token and logout
         pass
+    def preferences(self):
+        prefs = PreferencesWindow(self)
+        prefs.setModal(True)
+        prefs.show()
 
+
+class PreferencesWindow(QtGui.QDialog, preferences.Ui_Dialog):
+    def __init__(self, parent=None):
+        super(PreferencesWindow, self).__init__(parent)
+        self.setupUi(self)
 
 app = QtGui.QApplication(argv)
-form = mainwindow()
+form = MainWindow()
 form.show()
 app.exec_()

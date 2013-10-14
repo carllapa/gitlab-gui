@@ -99,7 +99,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.label_info)
         self.gridLayout.addLayout(self.horizontalLayout_2, 1, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtGui.QMenuBar(MainWindow)
+        self.menubar = QtGui.QMenuBar()
         self.menubar.setGeometry(QtCore.QRect(0, 0, 959, 20))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuMenu = QtGui.QMenu(self.menubar)

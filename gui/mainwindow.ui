@@ -139,16 +139,17 @@
      <x>0</x>
      <y>0</y>
      <width>959</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMenu">
     <property name="title">
      <string>Menu</string>
     </property>
-    <addaction name="actionPreferences"/>
-    <addaction name="separator"/>
-    <addaction name="actionExit"/>
+    <addaction name="actionExtra"/>
+    <addaction name="actionPreferences_3"/>
+    <addaction name="actionExit_3"/>
+    <addaction name="actionExit_4"/>
    </widget>
    <addaction name="menuMenu"/>
   </widget>
@@ -159,6 +160,41 @@
    </property>
   </action>
   <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionDfdfdf">
+   <property name="text">
+    <string>dfdfdf</string>
+   </property>
+  </action>
+  <action name="actionPreferences_2">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionExit_2">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionPreferences_3">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionExit_3">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionExtra">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionExit_4">
    <property name="text">
     <string>Exit</string>
    </property>
